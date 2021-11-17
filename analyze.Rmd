@@ -1,0 +1,76 @@
+---
+title: "analyze"
+author: "ke lan"
+date: "11/14/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+table <- read.csv("table.csv")
+(table <- table %>%  mutate(share_raw = str_c(share_1,share_2,sep = ""))) 
+(table <-table %>% separate(share_raw, c("share", "price_0")))
+table %>% filter(company_name == "Spirit of Texas Bancshares Inc.")
+(table <- table %>% mutate(price = price_0) %>% mutate(price = ifelse(is.na(price) == TRUE,price_1, price_0)))
+(table <- table %>% mutate(price = as.numeric(gsub("\\$", "", price))) %>% mutate(share = as.numeric(share)) %>% mutate(time = str_sub(time2,1,10)))
+(table <- table %>% mutate(share = ifelse(share_2 == "0",share * 100,share)))
+(table <- table %>% mutate(amount_sold = share * price))
+(table <- table %>% mutate(share_owned = ifelse(is.na(price_0) == FALSE, ifelse(amount_sold < 999999, str_c(amount_2,total_owned1,total_owned_2,total_owned3),str_c(total_owned1,total_owned_2,total_owned3,total_owned4)),ifelse(amount_sold < 999999, str_c(total_owned1, total_owned_2,total_owned3,total_owned4),str_c(total_owned_2,total_owned3,total_owned4)))))
+(table <- table %>% separate(share_owned, c("share_owned","nonsense")))
+(table <- table %>% select(number,time,company_name,ticker,person,share,price,amount_sold,share_owned))
+write.csv(table, file = 'table_cleaned.csv')
+```
+
+
+```{r}
+tickers <- table %>% pull(ticker) %>% unique() %>% sort()
+library(BatchGetSymbols)
+first.date <- Sys.Date() - 1000
+last.date <- Sys.Date()
+freq.data <- "daily"
+l.out <- BatchGetSymbols(
+  tickers = tickers, 
+  first.date = first.date,
+  last.date = last.date, 
+  freq.data = freq.data,
+  cache.folder = file.path(
+    tempdir(), 'financial viz') )
+library(ggplot2, quietly = TRUE)
+view(l.out$df.tickers)
+
+
+
+
+```
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(shiny)
+ticker <- l.out$df.tickers %>% pull(ticker) %>% unique() %>% sort()
+table_total <-l.out$df.tickers %>% left_join(table,by = "ticker")
+
+ui <- fluidPage(
+    titlePanel("股价模型"),
+    selectInput(inputId = "ticker", label = "ticker",ticker),
+     textInput("caption", "First Name", ""),
+    plotOutput("distPlot"),
+    verbatimTextOutput("summary")
+)
+server <- function(input, output) {
+    output$distPlot <- renderPlot({
+       ticker_I_Want <- table_total %>% filter(ticker == input$ticker) 
+       person_I_Want <- table_total %>% filter(ticker == input$ticker) %>% filter(str_detect(str_to_lower(person),str_to_lower(input$caption)) == TRUE)
+        ggplot(ticker_I_Want) +geom_line(data = ,aes(x = ref.date, y = price.close)) + 
+      scale_x_date(date_breaks = "months" , date_labels = "%b-%y") + geom_vline(data = person_I_Want,aes( xintercept = as.Date(time)),color = "red") + labs(x = "Time", Y = "Price") + geom_point(data = person_I_Want, aes(x = as.Date(time), y = price),color = "red")
+    })
+     output$summary <- renderPrint({
+    dataset <-  table_total %>% filter(ticker == input$ticker) %>%  filter(str_detect(str_to_lower(person),str_to_lower(input$caption)) == TRUE) %>% filter(as.Date(ref.date) == as.Date(time))
+    print(paste0("date: ", dataset$time,"   Name and Title: ", dataset$person, "  sell price: " ,dataset$price,"sell share: ",dataset$share, "  total amount: ", dataset$amount_sold, "  share_hold: ", dataset$share_owned))
+  })
+}
+shinyApp(ui = ui, server = server)
+
+```
+

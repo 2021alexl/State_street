@@ -1,0 +1,18 @@
+---
+title: ''
+author: "ke lan"
+date: "11/12/2021"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+library(tidyverse)
+library('xml2')
+src <- read_html("https://www.secform4.com/insider-sales")
+library(rvest)
+table <- src %>% html_nodes("tbody") %>% html_table() %>% as_tibble(.name_repair = "universal")
+write.csv(table, file = 'table.csv')
+```
