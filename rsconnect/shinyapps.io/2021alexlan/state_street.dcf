@@ -1,13 +1,13 @@
-name: state_street
-title: state_street
+name: example
+title: example
 username:
 account: 2021alexlan
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 5141995
-bundleId: 5260288
-url: https://2021alexlan.shinyapps.io/state_street/
-when: 1637110222.70411
-lastSyncTime: 1637110222.70413
+appId: 5146357
+bundleId: 5262559
+url: https://2021alexlan.shinyapps.io/example/
+when: 1637162506.17848
+lastSyncTime: 1637162506.17849
 asMultiple: FALSE
 asStatic: FALSE
